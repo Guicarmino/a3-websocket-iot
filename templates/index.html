@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Real-time Temperature Monitoring</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; max-width: 720px; margin: 40px auto; }
+        .card { border: 1px solid #ddd; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        h1 { margin-top: 0; }
+        .value { font-size: 1.2rem; }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const socket = io();
+
+            const statusEl = document.getElementById('status');
+            const temperatureEl = document.getElementById('temperature-data');
+            const averageEl = document.getElementById('average');
+
+            socket.on('server_status', function(data) {
+                statusEl.textContent = `Server status: ${data.message}`;
+                if (data.average !== null) {
+                    averageEl.textContent = `Rolling average: ${data.average} °C  |  Samples: ${data.count}`;
+                }
+            });
+
+            socket.on('temperature_data', function(data) {
+                const timestamp = new Date(data.timestamp).toLocaleString();
+                temperatureEl.innerHTML =
+                    `Timestamp: <span class="value">${timestamp}</span><br>` +
+                    `Temperature: <span class="value">${data.temperature} °C</span><br>` +
+                    `Location: <span class="value">${data.location}</span>`;
+            });
+
+            socket.on('average_temperature', function(data) {
+                if (data && typeof data.value !== 'undefined') {
+                    const v = (data.value === null) ? 'n/a' : data.value + ' °C';
+                    averageEl.textContent = `Rolling average: ${v}  |  Samples: ${data.count}`;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Real-time Temperature Monitoring</h1>
+
+    <div class="card"><div id="status">Server status: connecting…</div></div>
+    <div class="card"><div id="average">Rolling average: n/a</div></div>
+    <div class="card" id="temperature-data">Waiting for data…</div>
+</body>
+</html>
